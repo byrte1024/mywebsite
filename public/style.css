@@ -176,10 +176,10 @@ button.tag-chip.active:hover {
 }
 
 .badges {
-  margin-top: var(--cell-h);
   display: flex;
   flex-wrap: wrap;
   gap: 1ch;
+  align-items: center;
 }
 .badge {
   display: inline-block;
