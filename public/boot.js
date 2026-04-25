@@ -33,6 +33,11 @@
   const artEl = document.getElementById('boot-art');
   const logEl = document.getElementById('boot-log');
   if (!boot) return;
+  // Simple mode: skip the whole boot sequence.
+  if (document.body.classList.contains('simple')) {
+    boot.remove();
+    return;
+  }
 
   // If user has already seen the boot this session, skip.
   if (sessionStorage.getItem('booted') === '1') {

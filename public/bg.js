@@ -987,20 +987,44 @@
       currentFadeP = 1;
     }
 
-    // Pass 3: collapse the dot grid into braille glyphs and draw.
+    // Pass 3: draw the dot grid. Simple mode renders solid pixels (one
+    // fillRect per dot); otherwise we collapse into braille glyphs.
     ctx.fillStyle = 'rgb(106, 255, 160)';
-    for (let cy = 0; cy < rows; cy++) {
-      const baseDY = cy * 4;
-      const py = offY + cy * CELL_H;
-      for (let cx = 0; cx < cols; cx++) {
-        const baseDX = cx * 2;
-        let bits = 0;
-        for (let i = 0; i < 8; i++) {
-          const d = DOTS[i];
-          if (grid[(baseDY + d[1]) * dotCols + (baseDX + d[0])]) bits |= d[2];
+    const simple = document.body.classList.contains('simple');
+    if (simple) {
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      // Pre-compute integer x/y edges for every dot column/row so adjacent
+      // pixel rects share an exact edge and never leave 1px hairline gaps.
+      const xEdges = new Int32Array(dotCols + 1);
+      const yEdges = new Int32Array(dotRows + 1);
+      for (let i = 0; i <= dotCols; i++) xEdges[i] = Math.round(offX + i * dotPxX);
+      for (let j = 0; j <= dotRows; j++) yEdges[j] = Math.round(offY + j * dotPxY);
+      for (let dy = 0; dy < dotRows; dy++) {
+        const y = yEdges[dy];
+        const h = yEdges[dy + 1] - y;
+        if (h <= 0) continue;
+        for (let dx = 0; dx < dotCols; dx++) {
+          if (!grid[dy * dotCols + dx]) continue;
+          const x = xEdges[dx];
+          const w = xEdges[dx + 1] - x;
+          if (w > 0) ctx.fillRect(x, y, w, h);
         }
-        if (bits === 0) continue;
-        ctx.fillText(String.fromCharCode(BRAILLE_BASE | bits), offX + cx * cellW, py);
+      }
+    } else {
+      for (let cy = 0; cy < rows; cy++) {
+        const baseDY = cy * 4;
+        const py = offY + cy * CELL_H;
+        for (let cx = 0; cx < cols; cx++) {
+          const baseDX = cx * 2;
+          let bits = 0;
+          for (let i = 0; i < 8; i++) {
+            const d = DOTS[i];
+            if (grid[(baseDY + d[1]) * dotCols + (baseDX + d[0])]) bits |= d[2];
+          }
+          if (bits === 0) continue;
+          ctx.fillText(String.fromCharCode(BRAILLE_BASE | bits), offX + cx * cellW, py);
+        }
       }
     }
 

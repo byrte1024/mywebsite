@@ -1,5 +1,5 @@
 :root {
-  --bg: #0a0e0a;
+  --bg: #000;
   --fg: #c8ffc8;
   --dim: #4f8a4f;
   --hl: #fff7a8;
@@ -178,6 +178,118 @@ button.tag-chip.active:hover {
 .compose-msg     { margin-top: var(--cell-h); color: var(--dim); }
 .compose-msg.ok  { color: var(--accent); }
 .compose-msg.err { color: var(--hl); }
+
+/* ------------------------------------------------------------ simple mode */
+body.simple {
+  background: #111;
+  color: #ddd;
+  font-family: ui-monospace, Consolas, "DejaVu Sans Mono", monospace;
+  font-size: 15px;
+  line-height: 1.45;
+  text-shadow: none;
+}
+body.simple html, body.simple body { background: #111; }
+body.simple::before, body.simple::after { content: none; display: none !important; }
+body.simple #boot { display: none !important; }
+body.simple #bg { display: none; }
+body.simple.void #bg { display: block; opacity: 0.85; }
+
+body.simple .page {
+  max-width: 60em;
+  width: auto;
+  min-height: 0;
+  margin: 1.5em auto;
+  padding: 0 1em;
+  display: block;
+}
+body.simple .frame {
+  background: transparent !important;
+  padding: 0.6em 0;
+  margin: 0;
+  border-bottom: 1px solid #333;
+}
+body.simple .ascii-border,
+body.simple .ascii-shadow { display: none !important; }
+
+body.simple h1 { font-size: 1.2em; color: #fff; }
+body.simple h2 { font-size: 1.1em; color: #fff; }
+body.simple a, body.simple a:visited { color: #8cf; border: none; text-decoration: underline; }
+body.simple a:hover { background: transparent; color: #fff; }
+
+body.simple .post-title { color: #fff; border-bottom: none; }
+body.simple .meta { color: #888; }
+body.simple .author { color: #fff; }
+body.simple .tagline { color: #aaa; }
+
+body.simple a.tag-chip,
+body.simple button.tag-chip {
+  display: inline-block;
+  padding: 0 0.4em;
+  margin-right: 0.3em;
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #555;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+body.simple a.tag-chip:hover,
+body.simple button.tag-chip:hover { background: #222; color: #fff; }
+body.simple button.tag-chip.active { background: #ddd; color: #111; border-color: #ddd; }
+
+body.simple .void-btn,
+body.simple .simple-mode-btn {
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #666;
+  padding: 0.15em 0.6em;
+  cursor: pointer;
+}
+body.simple .void-btn:hover,
+body.simple .simple-mode-btn:hover { background: #222; color: #fff; }
+
+body.simple .compose textarea,
+body.simple .compose input[type=text] {
+  background: #1c1c1c; color: #ddd; border: 1px solid #555;
+}
+
+body.simple .filter-banner { border-bottom: 1px solid #333; padding-bottom: 0.3em; }
+
+/* Keep the void hint/counter readable on the pixel field. */
+body.simple .void-hint, body.simple .void-counter {
+  background: #111; padding: 0 0.4em;
+}
+
+/* Nuke text-shadow everywhere in simple mode so nothing has glow/halo. */
+body.simple, body.simple * { text-shadow: none !important; }
+
+/* Make sure the page reliably fades when entering the void from simple
+   mode. Same transition as default mode. */
+body.simple .page { transition: opacity 0.6s ease; }
+body.simple.void .page {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Toggle look for the simple-mode button: shows on/off state in both modes. */
+.simple-mode-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+body.simple .simple-mode-btn.active {
+  background: #ddd;
+  color: #111;
+  border-color: #ddd;
+}
+
+/* The canvas normally sits at z-index: -1 (behind body painting). In void
+   mode, lift it above the body's background so the void fully covers the
+   page — otherwise body bg shows through and the header looks like it has a
+   grey backdrop. */
+body.void #bg { z-index: 0; opacity: 1; }
+body.simple { background: #000; }
+body.simple html, body.simple body { background: #000; }
 
 .sig { color: var(--dim); }
 
