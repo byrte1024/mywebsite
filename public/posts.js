@@ -49,6 +49,8 @@
     if (!body) return;
     const nowCollapsed = body.classList.toggle('collapsed');
     t.textContent = nowCollapsed ? '[ read more ]' : '[ read less ]';
+    // Resize the ASCII frame around the comments section to match the new height.
+    if (typeof window.renderAscii === 'function') window.renderAscii();
   });
 
   document.addEventListener('click', (e) => {
@@ -222,13 +224,14 @@
         const body = wrap.querySelector('.comment-body');
         const btn  = wrap.querySelector('.comment-toggle');
         if (!body || !btn) return;
-        // Tolerance for sub-pixel rounding.
         if (body.scrollHeight - body.clientHeight > 2) {
           btn.hidden = false;
         } else {
           body.classList.remove('collapsed');
         }
       });
+      // Re-render the ASCII frame borders now that comment heights are final.
+      if (typeof window.renderAscii === 'function') window.renderAscii();
     });
   }
 
