@@ -182,17 +182,11 @@ button.tag-chip.active:hover {
 .comment-body-wrap { position: relative; }
 .comment-body { margin: 0; }
 .comment-body.collapsed {
-  max-height: calc(var(--cell-h) * 4);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  position: relative;
-}
-.comment-body.collapsed::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: var(--cell-h);
-  background: linear-gradient(to bottom, transparent, rgba(10,14,10,0.95));
-  pointer-events: none;
 }
 .comment-toggle {
   background: transparent;
@@ -204,10 +198,6 @@ button.tag-chip.active:hover {
   margin-top: 4px;
 }
 .comment-toggle:hover { color: var(--hl); }
-body.simple .comment-body.collapsed { max-height: 6em; }
-body.simple .comment-body.collapsed::after {
-  background: linear-gradient(to bottom, transparent, #111);
-}
 body.simple .comment-toggle { color: #8cf; }
 
 /* ------------------------------------------------------------ simple mode */

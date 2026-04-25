@@ -17,9 +17,12 @@
   }
 
   function pageKind() {
-    const p = location.pathname.replace(/\/+$/, '').toLowerCase();
-    if (p === '' || p.endsWith('/index.html')) return 'home';
-    if (p.endsWith('/template.html'))          return 'post';
+    // Vercel cleanUrls strips .html, so accept both /template and
+    // /template.html (and likewise for index).
+    let p = location.pathname.replace(/\/+$/, '').toLowerCase();
+    if (p === '') return 'home';
+    if (p === '/index' || p.endsWith('/index.html')) return 'home';
+    if (p === '/template' || p.endsWith('/template.html')) return 'post';
     return 'other';
   }
 
@@ -196,24 +199,37 @@
     section.dataset.title = `comments (${comments.length})`;
     if (!comments.length) {
       ul.innerHTML = '<li class="meta">no comments yet.</li>';
-    } else {
-      const LONG = 280;
-      ul.innerHTML = comments.map(c => {
-        const text = esc(c.body || '').replace(/\n/g, '<br>');
-        const long = (c.body || '').length > LONG;
-        const bodyHtml = long
-          ? `<div class="comment-body-wrap">
-               <p class="comment-body collapsed">${text}</p>
-               <button type="button" class="comment-toggle">[ read more ]</button>
-             </div>`
-          : `<p>${text}</p>`;
-        return `
-          <li>
-            <div class="meta">${esc(c.name)} &middot; ${fmtDate(c.createdAt)}</div>
-            ${bodyHtml}
-          </li>`;
-      }).join('');
+      return;
     }
+    // Always render the wrapper with a clamp + button. After paint, measure
+    // each: if the content fits within the line-clamp, drop the wrapper so
+    // short comments stay clean.
+    ul.innerHTML = comments.map(c => {
+      const text = esc(c.body || '').replace(/\n/g, '<br>');
+      return `
+        <li>
+          <div class="meta">${esc(c.name)} &middot; ${fmtDate(c.createdAt)}</div>
+          <div class="comment-body-wrap">
+            <p class="comment-body collapsed">${text}</p>
+            <button type="button" class="comment-toggle" hidden>[ read more ]</button>
+          </div>
+        </li>`;
+    }).join('');
+
+    // Measure on next frame so layout is settled.
+    requestAnimationFrame(() => {
+      ul.querySelectorAll('.comment-body-wrap').forEach(wrap => {
+        const body = wrap.querySelector('.comment-body');
+        const btn  = wrap.querySelector('.comment-toggle');
+        if (!body || !btn) return;
+        // Tolerance for sub-pixel rounding.
+        if (body.scrollHeight - body.clientHeight > 2) {
+          btn.hidden = false;
+        } else {
+          body.classList.remove('collapsed');
+        }
+      });
+    });
   }
 
   function wireCommentForm(slug) {
