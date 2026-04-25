@@ -50,7 +50,7 @@
       ul.innerHTML = posts.map(p => `
         <li class="post-row" data-id="${p.id}">
           <div>
-            <a href="../template.html?slug=${encodeURIComponent(p.slug)}" class="post-title">${esc(p.title)}</a>
+            <a href="/template.html?slug=${encodeURIComponent(p.slug)}" class="post-title">${esc(p.title)}</a>
             <div class="meta">${fmtDate(p.createdAt)} &middot; /${esc(p.slug)}/${
               p.category ? ' &middot; [' + esc(p.category.name) + ']' : ''
             }${
@@ -127,7 +127,7 @@
       <li class="post-row" data-id="${c.id}" data-ip="${esc(c.ip || '')}">
         <div>
           <div>${esc(c.name)} <span class="meta">on</span>
-            <a href="../template.html?slug=${encodeURIComponent(c.postSlug || '')}" class="post-title">${esc(c.postTitle || '(unknown post)')}</a>
+            <a href="/template.html?slug=${encodeURIComponent(c.postSlug || '')}" class="post-title">${esc(c.postTitle || '(unknown post)')}</a>
           </div>
           <div class="meta">${fmtDate(c.createdAt)} &middot; ${esc(c.status)} &middot; ip ${esc(c.ip || 'unknown')}</div>
           <div class="comment-body">${esc(c.body).replace(/\n/g, '<br>')}</div>

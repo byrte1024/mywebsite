@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/index.html)",
-      "Bash(kill %bq3movenj)"
+      "Bash(kill %bq3movenj)",
+      "Bash(node -e \"let s=require\\('fs'\\).readFileSync\\('backend/server.js','utf8'\\); s=s.replace\\(/saveStore\\\\\\(store\\\\\\);/g,'await saveStore\\(\\);'\\); require\\('fs'\\).writeFileSync\\('backend/server.js',s\\); console.log\\('done'\\);\")"
     ]
   }
 }

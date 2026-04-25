@@ -11,5 +11,8 @@
     "start": "node backend/server.js",
     "dev":   "node --watch backend/server.js"
   },
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  },
   "license": "UNLICENSED"
 }

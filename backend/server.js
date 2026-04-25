@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { URL } = require('url');
+const storage = require('./store');
 
-const DATA_FILE = path.join(__dirname, 'data.json');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 const STATIC_DIR = path.resolve(__dirname, '..', 'public');
 
@@ -37,7 +37,16 @@ function serveStatic(req, res, urlPath) {
     return send(res, 403, { error: 'forbidden' });
   }
   fs.stat(filePath, (err, stat) => {
-    if (err || !stat.isFile()) return send(res, 404, { error: 'not found' });
+    if (err) return send(res, 404, { error: 'not found' });
+    // If the URL points at a directory without a trailing slash, redirect so
+    // relative asset paths inside the directory's index.html resolve correctly.
+    if (stat.isDirectory()) {
+      cors(res);
+      res.writeHead(301, { Location: rel + '/' });
+      res.end();
+      return;
+    }
+    if (!stat.isFile()) return send(res, 404, { error: 'not found' });
     const ext = path.extname(filePath).toLowerCase();
     const mime = MIME[ext] || 'application/octet-stream';
     res.writeHead(200, {
@@ -74,29 +83,12 @@ if (!ADMIN_PASSWORD) {
 // storage
 // ---------------------------------------------------------------------------
 
-function emptyStore() {
-  return { posts: [], categories: [], tags: [], comments: [], nextId: 1 };
-}
-
-function loadStore() {
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Object.assign(emptyStore(), parsed);
-  } catch (err) {
-    if (err.code !== 'ENOENT') console.error('[store] read failed:', err.message);
-    return emptyStore();
-  }
-}
-
-function saveStore(store) {
-  const tmp = DATA_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
-  fs.renameSync(tmp, DATA_FILE);
-}
-
-let store = loadStore();
+// Store is loaded fresh at the start of each request so multiple Vercel
+// function instances stay consistent. nextId mutates the request-local copy
+// and is persisted by the same request's saveStore().
+let store = null;
 function nextId() { return store.nextId++; }
+const saveStore = () => storage.save(store);
 
 function slugify(s) {
   return String(s || '')
@@ -234,7 +226,7 @@ function postPublicView(p) {
 // router
 // ---------------------------------------------------------------------------
 
-const server = http.createServer(async (req, res) => {
+async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const method = req.method.toUpperCase();
   const parts = url.pathname.split('/').filter(Boolean);
@@ -242,6 +234,7 @@ const server = http.createServer(async (req, res) => {
   if (method === 'OPTIONS') return send(res, 204, '');
 
   try {
+    store = await storage.load();
     // -------- public reads -------------------------------------------------
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'posts' && parts.length === 2) {
       const cat  = url.searchParams.get('category');
@@ -308,7 +301,7 @@ const server = http.createServer(async (req, res) => {
         createdAt: Date.now(),
       };
       store.comments.push(c);
-      saveStore(store);
+      await saveStore();
       return send(res, 201, { ok: true, status: 'pending' });
     }
 
@@ -370,7 +363,7 @@ const server = http.createServer(async (req, res) => {
         const c = store.comments.find(c => c.id === id);
         if (!c) return send(res, 404, { error: 'not found' });
         c.status = 'approved';
-        saveStore(store);
+        await saveStore();
         return send(res, 200, c);
       }
 
@@ -380,7 +373,7 @@ const server = http.createServer(async (req, res) => {
         const idx = store.comments.findIndex(c => c.id === id);
         if (idx < 0) return send(res, 404, { error: 'not found' });
         store.comments.splice(idx, 1);
-        saveStore(store);
+        await saveStore();
         return send(res, 204, '');
       }
 
@@ -397,7 +390,7 @@ const server = http.createServer(async (req, res) => {
           removed++;
           return false;
         });
-        saveStore(store);
+        await saveStore();
         return send(res, 200, { removed });
       }
 
@@ -411,7 +404,7 @@ const server = http.createServer(async (req, res) => {
           return send(res, 409, { error: 'slug exists' });
         const cat = { id: nextId(), name, slug };
         store.categories.push(cat);
-        saveStore(store);
+        await saveStore();
         return send(res, 201, cat);
       }
       if (parts[2] === 'categories' && parts.length === 4 && (method === 'PATCH' || method === 'PUT')) {
@@ -426,7 +419,7 @@ const server = http.createServer(async (req, res) => {
             return send(res, 409, { error: 'slug exists' });
           cat.slug = ns;
         }
-        saveStore(store);
+        await saveStore();
         return send(res, 200, cat);
       }
       if (parts[2] === 'categories' && parts.length === 4 && method === 'DELETE') {
@@ -435,7 +428,7 @@ const server = http.createServer(async (req, res) => {
         if (idx < 0) return send(res, 404, { error: 'not found' });
         store.categories.splice(idx, 1);
         for (const p of store.posts) if (p.categoryId === id) p.categoryId = null;
-        saveStore(store);
+        await saveStore();
         return send(res, 204, '');
       }
 
@@ -449,7 +442,7 @@ const server = http.createServer(async (req, res) => {
           return send(res, 409, { error: 'slug exists' });
         const tag = { id: nextId(), name, slug };
         store.tags.push(tag);
-        saveStore(store);
+        await saveStore();
         return send(res, 201, tag);
       }
       if (parts[2] === 'tags' && parts.length === 4 && (method === 'PATCH' || method === 'PUT')) {
@@ -464,7 +457,7 @@ const server = http.createServer(async (req, res) => {
             return send(res, 409, { error: 'slug exists' });
           tag.slug = ns;
         }
-        saveStore(store);
+        await saveStore();
         return send(res, 200, tag);
       }
       if (parts[2] === 'tags' && parts.length === 4 && method === 'DELETE') {
@@ -475,7 +468,7 @@ const server = http.createServer(async (req, res) => {
         for (const p of store.posts) {
           p.tagIds = (p.tagIds || []).filter(t => t !== id);
         }
-        saveStore(store);
+        await saveStore();
         return send(res, 204, '');
       }
 
@@ -504,7 +497,7 @@ const server = http.createServer(async (req, res) => {
           updatedAt: now,
         };
         store.posts.push(post);
-        saveStore(store);
+        await saveStore();
         return send(res, 201, postPublicView(post));
       }
       if (parts[2] === 'posts' && parts.length === 4 && (method === 'PUT' || method === 'PATCH')) {
@@ -528,7 +521,7 @@ const server = http.createServer(async (req, res) => {
           post.tagIds = body.tags.map(t => ensureTag(t)).filter(Boolean).map(t => t.id);
         }
         post.updatedAt = Date.now();
-        saveStore(store);
+        await saveStore();
         return send(res, 200, postPublicView(post));
       }
       if (parts[2] === 'posts' && parts.length === 4 && method === 'DELETE') {
@@ -536,7 +529,7 @@ const server = http.createServer(async (req, res) => {
         const idx = store.posts.findIndex(p => p.id === id);
         if (idx < 0) return send(res, 404, { error: 'not found' });
         store.posts.splice(idx, 1);
-        saveStore(store);
+        await saveStore();
         return send(res, 204, '');
       }
     }
@@ -551,8 +544,15 @@ const server = http.createServer(async (req, res) => {
     console.error('[err]', err);
     return send(res, 500, { error: err.message || 'server error' });
   }
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`supernovayuli backend listening on http://localhost:${PORT}`);
-});
+module.exports = handler;
+module.exports.handler = handler;
+
+// Run as a standalone HTTP server only when invoked directly. When imported
+// (e.g. by api/[...path].js on Vercel), only the handler is exported.
+if (require.main === module) {
+  http.createServer(handler).listen(PORT, () => {
+    console.log(`supernovayuli backend listening on http://localhost:${PORT} (storage: ${storage.usingKv ? 'vercel-kv' : 'local-file'})`);
+  });
+}
