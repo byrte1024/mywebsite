@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# backend runtime files
+backend/data.json
+backend/data.json.tmp
+backend/config.json
+backend/.env
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

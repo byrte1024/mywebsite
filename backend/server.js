@@ -60,10 +60,14 @@ function loadConfig() {
 }
 
 const config = loadConfig();
-const PORT = parseInt(process.env.PORT, 10) || config.port || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || config.adminPassword || '';
+const PORT = parseInt(process.env.PORT, 10) || config.port || 80;
+const ADMIN_PASSWORD =
+  process.env.ADMIN_PASSWORD ||
+  process.env.API_KEY ||
+  config.adminPassword ||
+  '';
 if (!ADMIN_PASSWORD) {
-  console.warn('[warn] no admin password configured (config.json:adminPassword or $ADMIN_PASSWORD) — admin endpoints will reject.');
+  console.warn('[warn] no admin password configured (config.json:adminPassword, $ADMIN_PASSWORD, or $API_KEY) — admin endpoints will reject.');
 }
 
 // ---------------------------------------------------------------------------
