@@ -36,6 +36,18 @@
 
   // Toggle a tag chip on/off. Clicking the active tag clears it; clicking
   // another switches the filter.
+  // Read more / read less for long comments.
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('.comment-toggle');
+    if (!t) return;
+    const wrap = t.closest('.comment-body-wrap');
+    if (!wrap) return;
+    const body = wrap.querySelector('.comment-body');
+    if (!body) return;
+    const nowCollapsed = body.classList.toggle('collapsed');
+    t.textContent = nowCollapsed ? '[ read more ]' : '[ read less ]';
+  });
+
   document.addEventListener('click', (e) => {
     const btn = e.target.closest && e.target.closest('button.tag-chip[data-slug]');
     if (!btn) return;
@@ -185,12 +197,22 @@
     if (!comments.length) {
       ul.innerHTML = '<li class="meta">no comments yet.</li>';
     } else {
-      ul.innerHTML = comments.map(c => `
-        <li>
-          <div class="meta">${esc(c.name)} &middot; ${fmtDate(c.createdAt)}</div>
-          <p>${esc(c.body).replace(/\n/g, '<br>')}</p>
-        </li>
-      `).join('');
+      const LONG = 280;
+      ul.innerHTML = comments.map(c => {
+        const text = esc(c.body || '').replace(/\n/g, '<br>');
+        const long = (c.body || '').length > LONG;
+        const bodyHtml = long
+          ? `<div class="comment-body-wrap">
+               <p class="comment-body collapsed">${text}</p>
+               <button type="button" class="comment-toggle">[ read more ]</button>
+             </div>`
+          : `<p>${text}</p>`;
+        return `
+          <li>
+            <div class="meta">${esc(c.name)} &middot; ${fmtDate(c.createdAt)}</div>
+            ${bodyHtml}
+          </li>`;
+      }).join('');
     }
   }
 
