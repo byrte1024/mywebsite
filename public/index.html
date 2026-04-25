@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>supernovayuli's blog</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div id="boot" class="boot" aria-hidden="true">
+  <pre id="boot-art" class="boot-art"></pre>
+  <pre id="boot-log" class="boot-log"></pre>
+  <div class="boot-skip">[ press any key to skip ]</div>
+</div>
+
+<div class="page">
+
+  <header class="frame" data-title="supernovayuli's blog">
+    <div class="header-inner">
+      <h1>supernovayuli's blog</h1>
+      <p class="tagline">a journal by yuli &middot; transmissions, signals, stray thoughts</p>
+    </div>
+  </header>
+
+  <nav class="frame" data-title="about">
+    <p>this is a one-author blog. only <span class="author">yuli</span> posts. you can leave comments.</p>
+    <p class="meta">tags: <span id="tag-list">loading...</span></p>
+  </nav>
+
+  <main class="frame" data-title="posts">
+    <ul class="posts"></ul>
+  </main>
+
+  <footer class="frame" data-title="status">
+    <div class="status-row">
+      <span>node://supernovayuli</span>
+      <span>reader</span>
+      <button type="button" class="void-btn" id="void-btn">[ stare into the void ]</button>
+    </div>
+  </footer>
+
+</div>
+
+<script src="bg.js"></script>
+<script src="boot.js"></script>
+<script src="ascii.js"></script>
+<script src="void.js"></script>
+<script src="nav.js"></script>
+<script src="posts.js"></script>
+</body>
+</html>

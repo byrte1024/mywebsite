@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>post :: supernovayuli's blog</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div class="page">
+
+  <header class="frame" data-title="supernovayuli's blog">
+    <div class="header-inner">
+      <a href="index.html" class="back">&lt; back to all posts</a>
+    </div>
+  </header>
+
+  <article class="frame" data-title="post">
+    <h2 class="post-title">loading...</h2>
+    <div class="meta"></div>
+    <div class="body"></div>
+  </article>
+
+  <section class="frame" data-title="comments">
+    <ul class="replies">
+      <li class="meta">comments are not yet wired to the backend.</li>
+    </ul>
+  </section>
+
+  <section class="frame" data-title="leave a comment">
+    <form class="compose">
+      <label>name <input type="text" placeholder="anonymous"></label>
+      <textarea placeholder="say something..."></textarea>
+      <div class="actions">
+        <button type="submit">[ post comment ]</button>
+        <button type="reset">[ clear ]</button>
+      </div>
+    </form>
+  </section>
+
+  <footer class="frame" data-title="status">
+    <div class="status-row">
+      <span>POST</span>
+      <span>3 comments</span>
+      <button type="button" class="void-btn" id="void-btn">[ stare into the void ]</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && (e.key === 'q' || e.key === 'Q')) {
+    e.preventDefault();
+    sessionStorage.removeItem('booted');
+    location.href = 'index.html';
+  }
+});
+</script>
+<script src="bg.js"></script>
+<script src="ascii.js"></script>
+<script src="void.js"></script>
+<script src="nav.js"></script>
+<script src="posts.js"></script>
+</body>
+</html>

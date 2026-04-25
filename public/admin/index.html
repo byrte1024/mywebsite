@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>admin :: supernovayuli</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  .admin-form label { display: block; margin-bottom: var(--cell-h); color: var(--dim); }
+  .admin-form label span.lbl { display: inline-block; width: 12ch; color: var(--dim); }
+  .admin-form input[type=text],
+  .admin-form input[type=password],
+  .admin-form textarea {
+    background: transparent;
+    color: var(--fg);
+    border: 1px dashed var(--dim);
+    font: inherit;
+    padding: 0.25ch 1ch;
+    min-width: 40ch;
+  }
+  .admin-form textarea { width: 100%; min-height: calc(var(--cell-h) * 10); resize: vertical; }
+  .admin-form input:focus, .admin-form textarea:focus { outline: none; border-color: var(--accent); }
+  .admin-form button,
+  .post-row button,
+  #tag-bank button,
+  #comments-toolbar button {
+    background: transparent;
+    color: var(--accent);
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .admin-form button:hover,
+  .post-row button:hover,
+  #comments-toolbar button:hover { color: var(--hl); }
+  #comments-toolbar button { color: var(--link); }
+  .post-row { display: flex; justify-content: space-between; align-items: center; gap: 2ch; flex-wrap: wrap; }
+  .post-row .actions { display: flex; gap: 1ch; }
+  .post-row .actions button { color: var(--link); }
+  .post-row .actions button.danger { color: var(--hl); }
+  .post-row input[type=text] {
+    background: transparent;
+    color: var(--fg);
+    border: 1px dashed var(--dim);
+    font: inherit;
+    padding: 0 1ch;
+    min-width: 24ch;
+  }
+  .post-row input[type=text]:focus { outline: none; border-color: var(--accent); }
+  #tag-bank { display: inline-flex; flex-wrap: wrap; gap: 0.5ch; }
+  #tag-bank button.tag-chip {
+    color: var(--accent);
+    border-bottom: 1px dashed var(--accent);
+    padding: 0 0.25ch;
+  }
+  #tag-bank button.tag-chip:hover { background: var(--accent); color: var(--bg); border-bottom-color: transparent; }
+  #logout-btn { padding: 0 1ch; }
+  .err { color: var(--hl); }
+  .ok  { color: var(--accent); }
+  .comment-body {
+    margin-top: 4px;
+    color: var(--fg);
+    border-left: 1px dashed var(--dim);
+    padding-left: 1ch;
+    white-space: pre-wrap;
+  }
+  #comments-toolbar {
+    margin-bottom: var(--cell-h);
+    display: flex;
+    align-items: center;
+    gap: 2ch;
+  }
+  #comments-toolbar select {
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px dashed var(--dim);
+    font: inherit;
+    padding: 0 1ch;
+    cursor: pointer;
+  }
+  #comments-toolbar select:focus { outline: none; border-color: var(--accent); }
+  #comments-toolbar select option { background: var(--bg); color: var(--fg); }
+  #comments-toolbar label { color: var(--dim); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div class="page">
+
+  <header class="frame" data-title="admin">
+    <div class="header-inner">
+      <h1>supernovayuli admin</h1>
+      <p class="tagline"><a href="../index.html" class="back">&lt; back to blog</a></p>
+    </div>
+  </header>
+
+  <section class="frame" data-title="auth" id="login-section">
+    <form class="admin-form" id="login-form">
+      <label><span class="lbl">master pw</span><input type="password" id="pw" autocomplete="current-password" required></label>
+      <button type="submit">[ enter ]</button>
+      <span id="login-msg"></span>
+    </form>
+  </section>
+
+  <section class="frame" data-title="new post" id="new-post-section" hidden>
+    <form class="admin-form" id="post-form">
+      <label><span class="lbl">title</span><input type="text" id="post-title" required></label>
+      <label><span class="lbl">slug</span><input type="text" id="post-slug" placeholder="auto from title"></label>
+      <label><span class="lbl">category</span><input type="text" id="post-category" placeholder="optional"></label>
+      <label><span class="lbl">tags</span><input type="text" id="post-tags" placeholder="comma separated"></label>
+      <div class="meta" style="margin-bottom: var(--cell-h);">click to add: <span id="tag-bank"></span></div>
+      <label><span class="lbl">body</span><textarea id="post-body" rows="10" required></textarea></label>
+      <button type="submit">[ publish ]</button>
+      <span id="post-msg"></span>
+    </form>
+  </section>
+
+  <section class="frame" data-title="existing posts" id="post-list-section" hidden>
+    <ul id="post-list" class="posts"></ul>
+  </section>
+
+  <section class="frame" data-title="pending comments" id="comments-section" hidden>
+    <div class="meta" id="comments-toolbar">
+      <button type="button" id="comments-refresh">[ refresh ]</button>
+      <label style="margin-left:2ch;">
+        show
+        <select id="comments-status">
+          <option value="pending" selected>pending</option>
+          <option value="approved">approved</option>
+          <option value="all">all</option>
+        </select>
+      </label>
+    </div>
+    <ul id="comments-list" class="posts"></ul>
+  </section>
+
+  <section class="frame" data-title="categories &amp; tags" id="meta-section" hidden>
+    <form class="admin-form" id="cat-form">
+      <label><span class="lbl">new category</span><input type="text" id="cat-name" required></label>
+      <button type="submit">[ create ]</button>
+    </form>
+    <ul id="cat-list" class="posts"></ul>
+
+    <form class="admin-form" id="tag-form" style="margin-top: var(--cell-h);">
+      <label><span class="lbl">new tag</span><input type="text" id="tag-name" required></label>
+      <button type="submit">[ create ]</button>
+    </form>
+    <ul id="tag-list" class="posts"></ul>
+  </section>
+
+  <footer class="frame" data-title="status">
+    <div class="status-row">
+      <span>node://supernovayuli</span>
+      <span id="who">guest</span>
+      <button type="button" id="logout-btn" class="void-btn" hidden>[ logout ]</button>
+    </div>
+  </footer>
+
+</div>
+
+<script src="../bg.js"></script>
+<script src="../ascii.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
