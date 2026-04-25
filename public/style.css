@@ -175,6 +175,29 @@ button.tag-chip.active:hover {
   border-bottom: 1px dashed var(--dim);
 }
 
+.badges {
+  margin-top: var(--cell-h);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1ch;
+}
+.badge {
+  display: inline-block;
+  border: 1px solid var(--dim);
+  padding: 0;
+  line-height: 0;
+}
+.badge:hover { border-color: var(--accent); }
+.badge img {
+  display: block;
+  height: 60px;
+  width: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+body.simple .badge { border-color: #555; }
+body.simple .badge:hover { border-color: #fff; }
+
 .compose-msg     { margin-top: var(--cell-h); color: var(--dim); }
 .compose-msg.ok  { color: var(--accent); }
 .compose-msg.err { color: var(--hl); }
