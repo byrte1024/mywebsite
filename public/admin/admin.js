@@ -143,22 +143,55 @@
   }
 
   // ---- login ---------------------------------------------------------------
+  function fmtDuration(ms) {
+    if (ms <= 0) return '0s';
+    const s = Math.ceil(ms / 1000);
+    if (s < 60) return s + 's';
+    const m = Math.ceil(s / 60);
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60), rem = m % 60;
+    return rem ? `${h}h ${rem}m` : `${h}h`;
+  }
+
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     pw = document.getElementById('pw').value;
     const msg = document.getElementById('login-msg');
     msg.textContent = '...';
     msg.className = '';
-    if (await probe()) {
+    let r;
+    try {
+      r = await api('GET', '/api/admin/check');
+    } catch (_) {
+      pw = ''; sessionStorage.removeItem(KEY);
+      msg.textContent = 'network error.';
+      msg.className = 'err';
+      return;
+    }
+    if (r.ok) {
       sessionStorage.setItem(KEY, pw);
       msg.textContent = 'ok.';
       msg.className = 'ok';
       showAdmin(true);
       await refreshLists();
+      return;
+    }
+    pw = '';
+    sessionStorage.removeItem(KEY);
+    if (r.status === 429) {
+      const data = await r.json().catch(() => ({}));
+      const left = fmtDuration(data.retryAfterMs || 60 * 60 * 1000);
+      msg.textContent = `locked out. try again in ${left}.`;
+      msg.className = 'err';
+    } else if (r.status === 401) {
+      const data = await r.json().catch(() => ({}));
+      const left = data.attemptsLeft;
+      msg.textContent = (left != null && left > 0)
+        ? `denied. ${left} attempt${left === 1 ? '' : 's'} left before lockout.`
+        : 'denied.';
+      msg.className = 'err';
     } else {
-      pw = '';
-      sessionStorage.removeItem(KEY);
-      msg.textContent = 'denied.';
+      msg.textContent = 'error: ' + r.status;
       msg.className = 'err';
     }
   });

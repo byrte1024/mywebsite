@@ -127,6 +127,30 @@ function checkAdmin(req) {
   return crypto.timingSafeEqual(a, b);
 }
 
+// ---------- IP-based admin rate limit -------------------------------------
+// Five wrong passwords from the same IP locks that IP out for an hour.
+const ADMIN_FAIL_THRESHOLD = 5;
+const ADMIN_LOCK_MS = 60 * 60 * 1000;
+const adminFailByIp = new Map(); // ip -> { fails, lockedUntil }
+
+function adminLockedRemainingMs(ip) {
+  const r = adminFailByIp.get(ip);
+  if (!r || !r.lockedUntil) return 0;
+  const left = r.lockedUntil - Date.now();
+  if (left <= 0) { adminFailByIp.delete(ip); return 0; }
+  return left;
+}
+function recordAdminFail(ip) {
+  const r = adminFailByIp.get(ip) || { fails: 0, lockedUntil: 0 };
+  r.fails += 1;
+  if (r.fails >= ADMIN_FAIL_THRESHOLD) r.lockedUntil = Date.now() + ADMIN_LOCK_MS;
+  adminFailByIp.set(ip, r);
+  return r;
+}
+function recordAdminSuccess(ip) {
+  adminFailByIp.delete(ip);
+}
+
 // ---------------------------------------------------------------------------
 // http helpers
 // ---------------------------------------------------------------------------
@@ -294,7 +318,21 @@ const server = http.createServer(async (req, res) => {
     // -------- admin writes -------------------------------------------------
     const isAdminRoute = parts[0] === 'api' && parts[1] === 'admin';
     if (isAdminRoute) {
-      if (!checkAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+      const ip = clientIp(req);
+      const lockLeft = adminLockedRemainingMs(ip);
+      if (lockLeft > 0) {
+        const retrySec = Math.ceil(lockLeft / 1000);
+        return send(res, 429,
+          { error: 'too many attempts', retryAfterMs: lockLeft },
+          { 'Retry-After': String(retrySec) }
+        );
+      }
+      if (!checkAdmin(req)) {
+        const r = recordAdminFail(ip);
+        const remaining = Math.max(0, ADMIN_FAIL_THRESHOLD - r.fails);
+        return send(res, 401, { error: 'unauthorized', attemptsLeft: remaining });
+      }
+      recordAdminSuccess(ip);
 
       // probe endpoint so the admin UI can validate the password
       if (parts[2] === 'check' && parts.length === 3 && method === 'GET') {
