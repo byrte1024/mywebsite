@@ -281,8 +281,7 @@
     const dotRows = rows * 4;
     const grid = new Uint8Array(dotCols * dotRows);
 
-    // Pass 1: clouds. Sample fBM noise at every dot, after pushing each dot's
-    // screen position through the barrel-distortion lens.
+    // Pass 1: clouds. 4-octave fBM in both modes; only the framerate differs.
     for (let dy = 0; dy < dotRows; dy++) {
       const cy = dy >> 2;
       const i  = dy & 3;
@@ -290,14 +289,11 @@
       const pyScreen = offY + dy * dotPxY + dotPxY * 0.5;
       const nyR = (pyScreen - halfH) / halfH;
       for (let dx = 0; dx < dotCols; dx++) {
-        const cx = dx >> 1;
-        const j  = dx & 1;
         const pxScreen = offX + dx * dotPxX + dotPxX * 0.5;
         const nxR = (pxScreen - halfW) / halfW;
         const f = 1 + LENS_K * (nxR * nxR + nyR * nyR);
         const pxV = halfW + (pxScreen - halfW) * f;
         const pyV = halfH + (pyScreen - halfH) * f;
-        // Convert lens-warped screen px back into doc-space dot coords.
         const docDotX = (pxV - offX) / dotPxX + docCx0 * 2 + rowWarp + cloudCamXDot;
         const docDotY = (pyV - offY) / dotPxY + docCy0 * 4 + cloudCamYDot;
         let amp = 1, freq = 1, sum = 0, norm = 0;
@@ -1057,9 +1053,17 @@
   }
 
   let rafId = 0;
-  function loop() {
-    frame();
+  let lastDrawT = 0;
+  function loop(now) {
     rafId = requestAnimationFrame(loop);
+    // Simple mode hides the canvas entirely — skip all rendering work.
+    if (document.body.classList.contains('simple')) return;
+    // In void: full rAF. Otherwise throttle to ~12fps.
+    const inVoid = document.body.classList.contains('void');
+    const minDelta = inVoid ? 0 : 83;
+    if (now - lastDrawT < minDelta) return;
+    lastDrawT = now;
+    frame();
   }
 
   function start() {

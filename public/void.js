@@ -45,6 +45,38 @@
   const AUDIO_SRC = 'https://mynoise.net/NoiseMachines/intergalacticSoundscapeGenerator.php?l=45454545454545454545&a=1&am=s&title=Black%20Hole&c=1';
   let audioWin = null;
 
+  // ---- simple-mode void: a screen of randomly-cased o/O ------------------
+  let simpleEl = null;
+  let simpleTimer = 0;
+  function showSimpleVoid() {
+    if (!simpleEl) {
+      simpleEl = document.createElement('pre');
+      simpleEl.id = 'void-simple-text';
+      simpleEl.style.cssText =
+        'position:fixed;left:0;top:0;right:0;bottom:0;margin:0;padding:1em;' +
+        'background:#000;color:#0f0;font-family:monospace;font-size:14px;' +
+        'line-height:1.2;white-space:pre-wrap;word-break:break-all;' +
+        'overflow:hidden;z-index:2147483646;';
+      document.body.appendChild(simpleEl);
+    }
+    simpleEl.style.display = 'block';
+    function regen() {
+      const cw = 8.5, lh = 17;
+      const cols = Math.max(20, Math.floor((window.innerWidth  - 32) / cw));
+      const rows = Math.max(10, Math.floor((window.innerHeight - 32) / lh));
+      const total = cols * rows;
+      let s = '';
+      for (let i = 0; i < total; i++) s += Math.random() < 0.5 ? 'o' : 'O';
+      simpleEl.textContent = s;
+    }
+    regen();
+    simpleTimer = setInterval(regen, 250);
+  }
+  function hideSimpleVoid() {
+    if (simpleEl) simpleEl.style.display = 'none';
+    if (simpleTimer) { clearInterval(simpleTimer); simpleTimer = 0; }
+  }
+
   function enter(e) {
     if (active) return;
     e.stopPropagation();
@@ -54,6 +86,7 @@
     updateCounter();
     tickId = setInterval(updateCounter, 1000);
     document.body.classList.add('void');
+    if (document.body.classList.contains('simple')) showSimpleVoid();
 
     // mynoise refuses to be iframed (X-Frame-Options: sameorigin), so open it
     // in a small popup window. The user will need to click play inside it
@@ -78,6 +111,7 @@
     document.body.classList.remove('void');
     window.removeEventListener('keydown', onKey);
     clearInterval(tickId);
+    hideSimpleVoid();
     if (audioWin && !audioWin.closed) {
       try { audioWin.close(); } catch (_) {}
     }

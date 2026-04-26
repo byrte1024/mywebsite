@@ -61,12 +61,13 @@ body::before {
 }
 
 .page {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: var(--cell-h) var(--cell-w);
+  max-width: 800px;
+  width: auto;
+  margin: var(--cell-h) auto;
+  padding: 0 var(--cell-w);
   display: flex;
   flex-direction: column;
+  min-height: calc(100vh - 2 * var(--cell-h));
 }
 
 .page > .frame { width: 100%; }
@@ -76,27 +77,23 @@ body::before {
 /* every .frame gets an ASCII box drawn by ascii.js */
 .frame {
   position: relative;
-  margin: 0 0 var(--cell-h) 0;
-  padding: var(--pad-y) var(--pad-x);
+  margin: 0 0 calc(var(--cell-h) * 1.2) 0;
+  padding: calc(var(--cell-h) * 1.2) var(--cell-w) var(--cell-h);
   background: rgba(10, 14, 10, 0.95);
+  border: 1px solid var(--accent);
 }
 
-/* the JS-generated overlay sits behind the content */
-.frame > .ascii-border {
+/* Title label sits over the top border, like a fieldset legend. */
+.frame[data-title]::before {
+  content: " " attr(data-title) " ";
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  white-space: pre;
-  font: inherit;
-  line-height: var(--cell-h);
-  margin: 0;
+  top: -0.6em;
+  left: calc(var(--cell-w) * 2);
+  padding: 0 0.6ch;
+  background: var(--bg);
   color: var(--accent);
-  z-index: 1;
-}
-
-.frame > *:not(.ascii-border) {
-  position: relative;
-  z-index: 2;
+  font-size: 0.95em;
+  white-space: nowrap;
 }
 
 h1, h2, h3 { margin: 0; font-weight: normal; color: var(--accent); }

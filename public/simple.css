@@ -1,0 +1,178 @@
+/* simple-mode stylesheet — early-2000s personal page energy. */
+
+body {
+  background: #efece1;
+  color: #111;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 1em;
+}
+
+.page {
+  max-width: 800px;
+  margin: 1em auto;
+  padding: 0;
+}
+
+h1, h2, h3 {
+  font-family: Verdana, Geneva, sans-serif;
+  margin: 0.4em 0;
+}
+h1 { font-size: 1.5em; border-bottom: 2px solid #555; padding-bottom: 0.2em; }
+h2 { font-size: 1.2em; }
+
+a          { color: #0000ee; text-decoration: underline; }
+a:visited  { color: #551a8b; }
+a:hover    { color: #ee0000; }
+
+pre, code, kbd, samp { font-family: "Courier New", Courier, monospace; }
+
+p { margin: 0.6em 0; }
+
+button,
+input[type=submit],
+input[type=reset] {
+  font-family: inherit;
+  font-size: 0.95em;
+  padding: 2px 10px;
+  background: #d4d0c8;
+  color: black;
+  border: 2px outset #d4d0c8;
+  cursor: pointer;
+}
+button:active,
+input[type=submit]:active,
+input[type=reset]:active { border-style: inset; }
+
+input[type=text],
+input[type=password],
+textarea,
+select {
+  font-family: inherit;
+  font-size: 0.95em;
+  background: white;
+  color: black;
+  border: 2px inset #d4d0c8;
+  padding: 2px 4px;
+}
+textarea { width: 100%; min-height: 5em; }
+
+hr { border: 0; border-top: 1px solid #aaa; }
+
+.frame {
+  border: 1px solid #888;
+  background: #fdfaf0;
+  padding: 1em 1em 0.6em;
+  margin: 0 0 1em;
+  position: relative;
+}
+.frame[data-title]::before {
+  content: " " attr(data-title) " ";
+  position: absolute;
+  top: -0.7em;
+  left: 1em;
+  padding: 0 0.5em;
+  background: #efece1;
+  font-family: Verdana, Geneva, sans-serif;
+  font-weight: bold;
+  font-size: 0.85em;
+  color: #555;
+}
+
+.tagline   { color: #666; font-style: italic; }
+.meta      { color: #555; font-size: 0.9em; }
+.author    { font-weight: bold; }
+.post-title { font-weight: bold; }
+.sig       { color: #666; font-style: italic; }
+.back      { font-family: Verdana, sans-serif; font-size: 0.9em; }
+
+ul.posts, ul.replies, ul.boards {
+  list-style: square;
+  padding-left: 1.5em;
+}
+ul.posts li, ul.replies li, ul.boards li {
+  margin-bottom: 0.6em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px dotted #bbb;
+}
+ul.posts li:last-child,
+ul.replies li:last-child,
+ul.boards li:last-child { border-bottom: none; }
+
+.tag-chip,
+a.tag-chip,
+button.tag-chip {
+  display: inline-block;
+  padding: 0 0.4em;
+  margin-right: 0.3em;
+  background: #d4d0c8;
+  color: black;
+  border: 1px solid #888;
+  text-decoration: none;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+button.tag-chip.active {
+  background: #fffbe6;
+  border-color: #555;
+  font-weight: bold;
+}
+a.tag-chip:visited { color: black; }
+
+.badges        { list-style: none; display: flex; gap: 0.5em; flex-wrap: wrap; padding: 0; }
+.badge         { display: inline-block; border: 2px outset #d4d0c8; padding: 0; line-height: 0; }
+.badge img     { display: block; height: 31px; width: auto; image-rendering: pixelated; }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 0.85em;
+  color: #555;
+  flex-wrap: wrap;
+}
+.status-row .void-btn { margin-left: auto; }
+
+.simple-mode-btn.active {
+  background: #fffbe6;
+  border-style: inset;
+}
+
+.compose-msg     { margin-top: 0.5em; color: #555; }
+.compose-msg.ok  { color: #006800; }
+.compose-msg.err { color: #b00; }
+
+.filter-banner {
+  background: #fffbe6;
+  border-left: 3px solid #888;
+  padding: 0.3em 0.8em;
+  margin-bottom: 1em;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 0.9em;
+}
+
+.comment-body.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.comment-toggle {
+  background: transparent;
+  border: none;
+  color: #0000ee;
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+#bg, #boot { display: none !important; }
+
+/* Hide the void hint/counter — we replace them with the giant oO field. */
+.void-hint, .void-counter { display: none; }

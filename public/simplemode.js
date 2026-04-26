@@ -12,10 +12,41 @@
 
   function isOn() { return getCookie('simplemode') === '1'; }
 
+  // Strip every existing stylesheet, then drop in our small old-school sheet.
+  // Keeps the swap going so any later-injected styles get killed too.
+  function swapToSimpleCSS() {
+    function kill(el) {
+      if (!el || el.dataset.simple === '1') return;
+      try { el.disabled = true; } catch (_) {}
+      if (el.sheet) { try { el.sheet.disabled = true; } catch (_) {} }
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+    document.querySelectorAll('link[rel="stylesheet"], style').forEach(kill);
+    if (!document.querySelector('link[data-simple="1"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/simple.css';
+      link.dataset.simple = '1';
+      (document.head || document.documentElement).appendChild(link);
+    }
+    new MutationObserver((muts) => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.tagName === 'STYLE') kill(n);
+        else if (n.tagName === 'LINK' && (n.rel || '').toLowerCase() === 'stylesheet') kill(n);
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   function apply() {
     const on = isOn();
     document.body.classList.toggle('simple', on);
     document.querySelectorAll('.simple-mode-btn').forEach(b => b.classList.toggle('active', on));
+    if (on) {
+      swapToSimpleCSS();
+      const bg   = document.getElementById('bg');   if (bg)   bg.style.display = 'none';
+      const boot = document.getElementById('boot'); if (boot) boot.style.display = 'none';
+    }
   }
 
   // Apply ASAP so other scripts (boot, bg, ascii) see the class on first run.
