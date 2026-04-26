@@ -42,6 +42,15 @@
     if (e.key === 'Escape') exit();
   }
 
+  function setVoidedParam(on) {
+    try {
+      const url = new URL(location.href);
+      if (on) url.searchParams.set('voided', 'true');
+      else    url.searchParams.delete('voided');
+      history.replaceState(history.state, '', url.toString());
+    } catch (_) {}
+  }
+
   const AUDIO_SRC = 'https://mynoise.net/NoiseMachines/intergalacticSoundscapeGenerator.php?l=45454545454545454545&a=1&am=s&title=Black%20Hole&c=1';
   let audioWin = null;
 
@@ -79,13 +88,14 @@
 
   function enter(e) {
     if (active) return;
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     active = true;
     startedAt = Date.now();
     timeOffset = 0;
     updateCounter();
     tickId = setInterval(updateCounter, 1000);
     document.body.classList.add('void');
+    setVoidedParam(true);
     if (document.body.classList.contains('simple')) showSimpleVoid();
 
     // mynoise refuses to be iframed (X-Frame-Options: sameorigin), so open it
@@ -109,6 +119,7 @@
     if (!active) return;
     active = false;
     document.body.classList.remove('void');
+    setVoidedParam(false);
     window.removeEventListener('keydown', onKey);
     clearInterval(tickId);
     hideSimpleVoid();
@@ -135,4 +146,20 @@
   window.addEventListener('beforeunload', closePopup);
   window.addEventListener('pagehide',     closePopup);
   window.addEventListener('unload',       closePopup);
+
+  // Auto-enter the void if the URL is shared with ?voided=true.
+  function autoEnterIfRequested() {
+    if (active) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('voided') === 'true') enter(null);
+  }
+  if (new URLSearchParams(location.search).get('voided') === 'true') {
+    // Defer slightly so the page is fully wired before showing the overlay.
+    setTimeout(autoEnterIfRequested, 50);
+  }
+
+  // After soft-nav swaps the page, re-stamp the URL so the param survives.
+  window.addEventListener('pageswap', () => {
+    if (active) setVoidedParam(true);
+  });
 })();

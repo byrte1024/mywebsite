@@ -1035,19 +1035,19 @@
       document.querySelectorAll('.void-hint, .void-counter').forEach(e => {
         const r = e.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) {
+          // These are position:fixed. Store as viewport coords so the mask
+          // is rendered exactly under the pinned text, no scroll math.
           activeRects.push({
-            left:   r.left   + sx,
-            right:  r.right  + sx,
-            top:    r.top    + sy,
-            bottom: r.bottom + sy,
+            left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+            viewport: true,
           });
         }
       });
     }
     for (let i = 0; i < activeRects.length; i++) {
       const r = activeRects[i];
-      const x = r.left   - sx;
-      const y = r.top    - realSy;
+      const x = r.viewport ? r.left : (r.left - sx);
+      const y = r.viewport ? r.top  : (r.top  - realSy);
       const w = r.right  - r.left;
       const h = r.bottom - r.top;
       if (x + w < 0 || y + h < 0 || x > viewW || y > viewH) continue;
