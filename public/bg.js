@@ -226,7 +226,10 @@
   function frame() {
     if (maskDirty) { maskRects = collectMaskRects(); maskDirty = false; }
     const elapsed = (Date.now() - t0) * 0.00012;
-    const sx = window.scrollX, sy = window.scrollY;
+    // Bg should not move when scrolling vertically — pin sy to 0 for the
+    // noise/star math; keep the real value separately for foreground masking.
+    const sx = window.scrollX, sy = 0;
+    const realSy = window.scrollY;
 
     // Smooth the camera toward the mouse target.
     camX += (tCamX - camX) * 0.08;
@@ -1044,7 +1047,7 @@
     for (let i = 0; i < activeRects.length; i++) {
       const r = activeRects[i];
       const x = r.left   - sx;
-      const y = r.top    - sy;
+      const y = r.top    - realSy;
       const w = r.right  - r.left;
       const h = r.bottom - r.top;
       if (x + w < 0 || y + h < 0 || x > viewW || y > viewH) continue;
