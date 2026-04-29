@@ -304,13 +304,6 @@ body.simple .void-hint, body.simple .void-counter {
 /* Nuke text-shadow everywhere in simple mode so nothing has glow/halo. */
 body.simple, body.simple * { text-shadow: none !important; }
 
-/* Make sure the page reliably fades when entering the void from simple
-   mode. Same transition as default mode. */
-body.simple .page { transition: opacity 0.6s ease; }
-body.simple.void .page {
-  opacity: 0 !important;
-  pointer-events: none;
-}
 
 /* Toggle look for the simple-mode button: shows on/off state in both modes. */
 .simple-mode-btn.active {
@@ -376,15 +369,21 @@ body.simple html, body.simple body { background: #000; }
   cursor: pointer;
   padding: 0 1ch;
   transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  display: inline-block;
 }
 .void-btn:hover,
 .void-btn:focus { background: var(--hl); color: var(--bg); outline: none; }
+a.void-btn:visited { color: var(--hl); }
 
-body.void .page { opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
-body:not(.void) .page { transition: opacity 0.6s ease; }
 body.void { cursor: crosshair; }
-body.void #bg { opacity: 0.6; transition: opacity 1s ease; }
-#bg { transition: opacity 1s ease; }
+body.void #bg { opacity: 0.6; }
+
+/* Soft cross-page fade for entering/leaving the void. */
+body { transition: opacity 0.5s ease; }
+body.fading-out    { opacity: 0; pointer-events: none; }
+body.fading-in     { opacity: 0; }
+body.no-transition { transition: none !important; }
 .void-hint {
   position: fixed;
   bottom: var(--cell-h);
@@ -397,7 +396,7 @@ body.void #bg { opacity: 0.6; transition: opacity 1s ease; }
   transition: opacity 0.6s ease;
   text-shadow: none;
 }
-body.void .void-hint { opacity: 1; transition-delay: 1.2s; }
+body.void .void-hint { opacity: 1; transition-delay: 0.4s; }
 
 .void-counter {
   position: fixed;
@@ -412,7 +411,7 @@ body.void .void-hint { opacity: 1; transition-delay: 1.2s; }
   white-space: nowrap;
   text-shadow: none;
 }
-body.void .void-counter { opacity: 1; transition-delay: 1.2s; }
+body.void .void-counter { opacity: 1; transition-delay: 0.4s; }
 
 .author { color: var(--hl); }
 .excerpt { color: var(--fg); margin-top: 4px; }

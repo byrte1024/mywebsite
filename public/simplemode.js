@@ -1,6 +1,33 @@
 (function () {
   'use strict';
 
+  // If we just came from a void transition, start at opacity 0 and let CSS
+  // animate up to 1 on the next frame.
+  function applyFadeIn() {
+    if (sessionStorage.getItem('void-fade') !== '1') return;
+    sessionStorage.removeItem('void-fade');
+    const b = document.body;
+    b.classList.remove('fading-out');
+    // Snap to opacity 0 with NO transition (so we don't briefly fade DOWN
+    // from 1 → 0 first), then re-enable the transition and animate up to 1.
+    b.classList.add('no-transition', 'fading-in');
+    // Force layout so the no-transition opacity:0 commits.
+    void b.offsetWidth;
+    b.classList.remove('no-transition');
+    requestAnimationFrame(() => {
+      b.classList.remove('fading-in');
+    });
+  }
+  applyFadeIn();
+  // Re-trigger after a back-forward-cache restore (the IIFE doesn't run then).
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+      // Strip any stale fading-out class left over before navigation.
+      document.body.classList.remove('fading-out');
+      applyFadeIn();
+    }
+  });
+
   function getCookie(name) {
     const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
     return m ? decodeURIComponent(m[1]) : '';

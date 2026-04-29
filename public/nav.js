@@ -3,6 +3,7 @@
 
   function isInternal(a) {
     if (!a || a.target === '_blank') return false;
+    if (a.hasAttribute('data-no-nav')) return false;
     const href = a.getAttribute('href');
     if (!href) return false;
     if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;

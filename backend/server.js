@@ -37,7 +37,20 @@ function serveStatic(req, res, urlPath) {
     return send(res, 403, { error: 'forbidden' });
   }
   fs.stat(filePath, (err, stat) => {
-    if (err) return send(res, 404, { error: 'not found' });
+    if (err) {
+      // Fall through to /404.html if it exists.
+      const notFound = path.resolve(STATIC_DIR, '404.html');
+      fs.stat(notFound, (e2, s2) => {
+        if (e2 || !s2.isFile()) return send(res, 404, { error: 'not found' });
+        cors(res);
+        res.writeHead(404, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': s2.size,
+        });
+        fs.createReadStream(notFound).pipe(res);
+      });
+      return;
+    }
     // If the URL points at a directory without a trailing slash, redirect so
     // relative asset paths inside the directory's index.html resolve correctly.
     if (stat.isDirectory()) {

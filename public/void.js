@@ -1,30 +1,52 @@
 (function () {
   'use strict';
 
-  // Use event delegation so the button works after soft-nav swaps.
+  const AUDIO_SRC = 'https://mynoise.net/NoiseMachines/intergalacticSoundscapeGenerator.php?l=45454545454545454545&a=1&am=s&title=Black%20Hole&c=1';
+  const onVoidPage = location.pathname === '/void' ||
+                     location.pathname === '/void.html' ||
+                     location.pathname.endsWith('/void.html');
 
-  // Hint element shown while in the void.
+  // ---------- non-void pages: intercept the [stare into the void] link -----
+  if (!onVoidPage) {
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented) return;
+      if (e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const btn = e.target.closest && e.target.closest('.void-btn[data-void-link]');
+      if (!btn) return;
+      e.preventDefault();
+      // Open the audio popup synchronously, while we still have the user's
+      // click as the activation source — otherwise the browser blocks it.
+      try {
+        window.open(
+          AUDIO_SRC,
+          'voidaudio',
+          'popup=yes,width=440,height=320,left=20,top=20,' +
+          'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
+        );
+      } catch (_) {}
+      const from = encodeURIComponent(location.pathname + location.search);
+      sessionStorage.setItem('void-fade', '1');
+      document.body.classList.add('fading-out');
+      setTimeout(() => {
+        location.href = '/void.html?from=' + from;
+      }, 480);
+    }, true);
+    return;
+  }
+
+  // ---------- /void.html ---------------------------------------------------
+
   const hint = document.createElement('div');
   hint.className = 'void-hint';
   hint.textContent = '. . . press [esc] to return . . .';
   document.body.appendChild(hint);
 
-  // Counter element shown while in the void.
   const counter = document.createElement('div');
   counter.className = 'void-counter';
-  counter.textContent = "you've been staring at the void for 0s";
   document.body.appendChild(counter);
 
-  let active = false;
-  let startedAt = 0;
-  let tickId = 0;
-  let timeOffset = 0;
-
-  function getElapsed() {
-    return active ? Math.max(0, Date.now() - startedAt + timeOffset) : 0;
-  }
-  window.voidElapsedMs = getElapsed;
-
+  const startedAt = Date.now();
   function fmt(ms) {
     const s = Math.floor(ms / 1000);
     const h = Math.floor(s / 3600);
@@ -35,28 +57,14 @@
     return `${sec}s`;
   }
   function updateCounter() {
-    counter.textContent = `you've been staring at the void for ${fmt(getElapsed())}`;
+    counter.textContent = `you've been staring at the void for ${fmt(Date.now() - startedAt)}`;
   }
+  updateCounter();
+  const tickId = setInterval(updateCounter, 1000);
+  window.voidElapsedMs = () => Date.now() - startedAt;
 
-  function onKey(e) {
-    if (e.key === 'Escape') exit();
-  }
-
-  function setVoidedParam(on) {
-    try {
-      const url = new URL(location.href);
-      if (on) url.searchParams.set('voided', 'true');
-      else    url.searchParams.delete('voided');
-      history.replaceState(history.state, '', url.toString());
-    } catch (_) {}
-  }
-
-  const AUDIO_SRC = 'https://mynoise.net/NoiseMachines/intergalacticSoundscapeGenerator.php?l=45454545454545454545&a=1&am=s&title=Black%20Hole&c=1';
-  let audioWin = null;
-
-  // ---- simple-mode void: a screen of randomly-cased o/O ------------------
-  let simpleEl = null;
-  let simpleTimer = 0;
+  // ----- simple-mode oO overlay -----
+  let simpleEl = null, simpleTimer = 0;
   function showSimpleVoid() {
     if (!simpleEl) {
       simpleEl = document.createElement('pre');
@@ -68,7 +76,6 @@
         'overflow:hidden;z-index:2147483646;';
       document.body.appendChild(simpleEl);
     }
-    simpleEl.style.display = 'block';
     function regen() {
       const cw = 8.5, lh = 17;
       const cols = Math.max(20, Math.floor((window.innerWidth  - 32) / cw));
@@ -81,85 +88,38 @@
     regen();
     simpleTimer = setInterval(regen, 250);
   }
-  function hideSimpleVoid() {
-    if (simpleEl) simpleEl.style.display = 'none';
-    if (simpleTimer) { clearInterval(simpleTimer); simpleTimer = 0; }
-  }
+  if (document.body.classList.contains('simple')) showSimpleVoid();
 
-  function enter(e) {
-    if (active) return;
-    if (e && e.stopPropagation) e.stopPropagation();
-    active = true;
-    startedAt = Date.now();
-    timeOffset = 0;
-    updateCounter();
-    tickId = setInterval(updateCounter, 1000);
-    document.body.classList.add('void');
-    setVoidedParam(true);
-    if (document.body.classList.contains('simple')) showSimpleVoid();
-
-    // mynoise refuses to be iframed (X-Frame-Options: sameorigin), so open it
-    // in a small popup window. The user will need to click play inside it
-    // once because browsers block cross-origin audio autoplay.
+  // ----- exit: close audio popup, navigate back to ?from -----
+  function closeAudioPopup() {
+    // Re-acquire the named popup. If it's still open, this hands us the same
+    // reference and we close it. If it isn't, a blank popup briefly opens
+    // and is immediately closed — best-effort.
     try {
-      audioWin = window.open(
-        AUDIO_SRC,
-        'voidaudio',
-        'popup=yes,width=440,height=320,left=20,top=20,' +
-        'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
-      );
-    } catch (_) { audioWin = null; }
-
-    setTimeout(() => {
-      window.addEventListener('keydown', onKey);
-    }, 0);
+      const popup = window.open('', 'voidaudio');
+      if (popup) popup.close();
+    } catch (_) {}
   }
-
+  let exiting = false;
   function exit() {
-    if (!active) return;
-    active = false;
-    document.body.classList.remove('void');
-    setVoidedParam(false);
-    window.removeEventListener('keydown', onKey);
+    if (exiting) return;
+    exiting = true;
+    closeAudioPopup();
     clearInterval(tickId);
-    hideSimpleVoid();
-    if (audioWin && !audioWin.closed) {
-      try { audioWin.close(); } catch (_) {}
-    }
-    audioWin = null;
-  }
-
-  document.addEventListener('click', (e) => {
-    const t = e.target.closest && e.target.closest('.void-btn');
-    if (t) enter(e);
-  });
-
-  // If the parent tab/window is closing or reloading, take the audio popup
-  // with it so it isn't orphaned. beforeunload fires synchronously before
-  // close, which is the only reliable hook on a hard tab-close.
-  function closePopup() {
-    if (audioWin && !audioWin.closed) {
-      try { audioWin.close(); } catch (_) {}
-    }
-    audioWin = null;
-  }
-  window.addEventListener('beforeunload', closePopup);
-  window.addEventListener('pagehide',     closePopup);
-  window.addEventListener('unload',       closePopup);
-
-  // Auto-enter the void if the URL is shared with ?voided=true.
-  function autoEnterIfRequested() {
-    if (active) return;
+    if (simpleTimer) { clearInterval(simpleTimer); simpleTimer = 0; }
     const params = new URLSearchParams(location.search);
-    if (params.get('voided') === 'true') enter(null);
+    const from = params.get('from');
+    const dest = (from && from[0] === '/') ? from : '/';
+    sessionStorage.setItem('void-fade', '1');
+    document.body.classList.add('fading-out');
+    setTimeout(() => { location.href = dest; }, 480);
   }
-  if (new URLSearchParams(location.search).get('voided') === 'true') {
-    // Defer slightly so the page is fully wired before showing the overlay.
-    setTimeout(autoEnterIfRequested, 50);
-  }
-
-  // After soft-nav swaps the page, re-stamp the URL so the param survives.
-  window.addEventListener('pageswap', () => {
-    if (active) setVoidedParam(true);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') exit();
   });
+
+  // Cleanup if the user closes/refreshes the void tab itself.
+  window.addEventListener('beforeunload', closeAudioPopup);
+  window.addEventListener('pagehide',     closeAudioPopup);
+  window.addEventListener('unload',       closeAudioPopup);
 })();
