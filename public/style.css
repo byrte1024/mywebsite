@@ -329,12 +329,20 @@ body.simple html, body.simple body { background: #000; }
 
 .status-row {
   display: flex;
-  gap: 4ch;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--cell-h) 2ch;
 }
 .status-row span { color: var(--accent); }
-.status-row .void-btn { margin-left: auto; }
+.status-info,
+.status-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25ch;
+}
+.status-buttons { gap: 1ch; }
 
 .compose textarea {
   width: 100%;
@@ -378,6 +386,8 @@ a.void-btn:visited { color: var(--hl); }
 
 body.void { cursor: crosshair; }
 body.void #bg { opacity: 0.6; }
+body.explore { cursor: crosshair; }
+body.explore #bg { opacity: 1; }
 
 /* Soft cross-page fade for entering/leaving the void. */
 body { transition: opacity 0.5s ease; }
@@ -396,7 +406,12 @@ body.no-transition { transition: none !important; }
   transition: opacity 0.6s ease;
   text-shadow: none;
 }
-body.void .void-hint { opacity: 1; transition-delay: 0.4s; }
+body.void .void-hint,
+body.explore .void-hint { opacity: 1; transition-delay: 0.4s; }
+body.explore .void-hint {
+  background: var(--bg);
+  padding: 0 1ch;
+}
 
 .void-counter {
   position: fixed;

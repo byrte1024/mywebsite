@@ -2,9 +2,8 @@
   'use strict';
 
   const AUDIO_SRC = 'https://mynoise.net/NoiseMachines/intergalacticSoundscapeGenerator.php?l=45454545454545454545&a=1&am=s&title=Black%20Hole&c=1';
-  const onVoidPage = location.pathname === '/void' ||
-                     location.pathname === '/void.html' ||
-                     location.pathname.endsWith('/void.html');
+  const path = location.pathname;
+  const onVoidPage = path === '/void' || path === '/void.html' || path.endsWith('/void.html');
 
   // ---------- non-void pages: intercept the [stare into the void] link -----
   if (!onVoidPage) {
@@ -12,10 +11,10 @@
       if (e.defaultPrevented) return;
       if (e.button !== 0) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const btn = e.target.closest && e.target.closest('.void-btn[data-void-link]');
+      const btn = e.target.closest && e.target.closest('[data-void-link]');
       if (!btn) return;
       e.preventDefault();
-      // Open the audio popup synchronously, while we still have the user's
+      // Open the audio popup synchronously while we still have the user's
       // click as the activation source — otherwise the browser blocks it.
       try {
         window.open(
@@ -65,18 +64,16 @@
 
   // ----- simple-mode oO overlay -----
   let simpleEl = null, simpleTimer = 0;
-  function showSimpleVoid() {
-    if (!simpleEl) {
-      simpleEl = document.createElement('pre');
-      simpleEl.id = 'void-simple-text';
-      simpleEl.style.cssText =
-        'position:fixed;left:0;top:0;right:0;bottom:0;margin:0;padding:1em;' +
-        'background:#000;color:#0f0;font-family:monospace;font-size:14px;' +
-        'line-height:1.2;white-space:pre-wrap;word-break:break-all;' +
-        'overflow:hidden;z-index:2147483646;';
-      document.body.appendChild(simpleEl);
-    }
-    function regen() {
+  if (document.body.classList.contains('simple')) {
+    simpleEl = document.createElement('pre');
+    simpleEl.id = 'void-simple-text';
+    simpleEl.style.cssText =
+      'position:fixed;left:0;top:0;right:0;bottom:0;margin:0;padding:1em;' +
+      'background:#000;color:#0f0;font-family:monospace;font-size:14px;' +
+      'line-height:1.2;white-space:pre-wrap;word-break:break-all;' +
+      'overflow:hidden;z-index:2147483646;';
+    document.body.appendChild(simpleEl);
+    const regen = () => {
       const cw = 8.5, lh = 17;
       const cols = Math.max(20, Math.floor((window.innerWidth  - 32) / cw));
       const rows = Math.max(10, Math.floor((window.innerHeight - 32) / lh));
@@ -84,17 +81,12 @@
       let s = '';
       for (let i = 0; i < total; i++) s += Math.random() < 0.5 ? 'o' : 'O';
       simpleEl.textContent = s;
-    }
+    };
     regen();
     simpleTimer = setInterval(regen, 250);
   }
-  if (document.body.classList.contains('simple')) showSimpleVoid();
 
-  // ----- exit: close audio popup, navigate back to ?from -----
   function closeAudioPopup() {
-    // Re-acquire the named popup. If it's still open, this hands us the same
-    // reference and we close it. If it isn't, a blank popup briefly opens
-    // and is immediately closed — best-effort.
     try {
       const popup = window.open('', 'voidaudio');
       if (popup) popup.close();
@@ -118,7 +110,6 @@
     if (e.key === 'Escape') exit();
   });
 
-  // Cleanup if the user closes/refreshes the void tab itself.
   window.addEventListener('beforeunload', closeAudioPopup);
   window.addEventListener('pagehide',     closeAudioPopup);
   window.addEventListener('unload',       closeAudioPopup);
